@@ -16,12 +16,14 @@ pre-commit:
     fmt:
       glob_filter:
         - "**/*.rs"
-      run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo fmt --all -- --check
+      run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo fmt -- --check
     clippy:
       glob_filter:
         - "**/*.rs"
       run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo clippy --workspace --all-targets -- -D warnings
     test:
+      glob_filter:
+        - "**/*.rs"
       run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo test --workspace
 
 pre-push:

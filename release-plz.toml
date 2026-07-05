@@ -1,0 +1,39 @@
+# release-plz configuration.
+# Docs: https://github.com/release-plz/release-plz/blob/main/release-plz.toml
+#
+# We use release-plz locally only — no GitHub Actions, no CI minutes.
+# See README "Releases" section for the full release flow.
+
+[workspace]
+git_release_enable = false
+dependencies_update = true
+
+git_release_body = """
+{{ changelog }}
+{% if remote.contributors %}
+### Contributors
+{% for contributor in remote.contributors %}
+* @{{ contributor.username }}
+{% endfor %}
+{% endif %}
+"""
+
+# The only publishable package. The extension is local-only
+# (it ships via Zed's extension registry, not here).
+[[package]]
+name = "minimax-proxy-server"
+changelog_path = "server/CHANGELOG.md"
+changelog_include = ["server/**"]
+git_release_enable = true
+git_release_name = "v{{version}}"
+git_release_draft = false
+publish = false
+semver_check = true
+
+# Extension: excluded from release-plz flow.
+[[package]]
+name = "minimax-proxy-extension"
+changelog_path = "CHANGELOG.md"
+git_release_enable = false
+publish = false
+release = false

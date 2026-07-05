@@ -472,11 +472,7 @@ async fn run_lsp_stub() {
                 .strip_prefix("Content-Length:")
                 .or_else(|| trimmed.strip_prefix("content-length:"))
             {
-                if let Some(parsed) = value
-                    .trim()
-                    .parse::<usize>()
-                    .ok()
-                {
+                if let Ok(parsed) = value.trim().parse::<usize>() {
                     content_length = Some(parsed);
                 }
             }
@@ -788,10 +784,7 @@ fn apply_stop_sequences(text: &str, stop: Option<&StopSequences>) -> String {
         None => Vec::new(),
     };
 
-    for stop_sequence in user_stops
-        .iter()
-        .chain(DEFAULT_STOP_SEQUENCES.iter())
-    {
+    for stop_sequence in user_stops.iter().chain(DEFAULT_STOP_SEQUENCES.iter()) {
         if stop_sequence.is_empty() {
             continue;
         }

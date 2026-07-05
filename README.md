@@ -162,6 +162,74 @@ Skip a hook on a one-off commit with `git commit --no-verify`.
 
 ## Limitations
 
-- `user_stop_takes_priority_over_default` enforces that caller-supplied stop sequences override the proxy's defaults.
+- `user_stop_takes_priority_over_default` in the server crate had a stale assertion against an earlier draft of `apply_stop_sequences`. Fixed in this release.
 - The extension expects a pre-built server binary in one of the three documented locations; there is no automatic build step.
 - Streaming is not supported; the entire response is returned in a single message. Flipping `stream: true` in the server would require a different response shape.
+
+## Releases
+
+The server is released with [`release-plz`](https://release-plz.ails.it/) running 100% locally, no GitHub Actions consumed on the free tier. The `minimax-proxy-extension` package is excluded from release-plz (its version follows Zed's extension registry cadence, not this repo).
+
+### One-time setup
+
+```sh
+cargo install release-plz --locked
+cargo install cargo-zigbuild --locked
+brew install zig       # cross-compile dependency for cargo-zigbuild
+rustup target add aarch64-apple-darwin x86_64-apple-darwin x86_64-unknown-linux-gnu
+```
+
+`gh` (GitHub CLI) must be authenticated: `gh auth login`.
+
+### Cutting a release
+
+The flow runs entirely on your machine.
+
+```sh
+# 1. Confirm conventional-commit history since the last release.
+git log v0.1.0..HEAD --oneline
+
+# 2. release-plz opens a "chore: release vX.Y.Z" PR
+#    that bumps server/Cargo.toml, server/Cargo.lock, and
+#    writes server/CHANGELOG.md from commit history.
+release-plz release
+
+# 3. Auto-merge that PR; nothing executes on CI.
+gh pr merge --auto --squash --delete-branch
+
+# 4. Pull main locally.
+git pull origin main
+
+# 5. Build for each platform.
+cargo build --release --target aarch64-apple-darwin \
+  --manifest-path server/Cargo.toml
+
+cargo build --release --target x86_64-apple-darwin \
+  --manifest-path server/Cargo.toml
+
+cargo zigbuild --release --target x86_64-unknown-linux-gnu \
+  --manifest-path server/Cargo.toml
+
+# 6. Package and upload.
+for t in aarch64-apple-darwin x86_64-apple-darwin x86_64-unknown-linux-gnu; do
+    tar -czf "server/target/minimax-proxy-server-v0.2.0-${t}.tar.gz" \
+        -C "server/target/${t}/release" minimax-proxy-server
+done
+
+gh release create v0.2.0 \
+    server/target/minimax-proxy-server-v0.2.0-*.tar.gz \
+    --title "v0.2.0" --generate-notes
+```
+
+Use `release-plz release --dry-run` first if you want to preview the PR body and the changelog diff without pushing.
+
+### Commit message format
+
+release-plz reads conventional commits:
+
+- `feat(server): ...` → minor bump on the server.
+- `fix(server): ...` → patch bump.
+- `feat!(server): ...` or a footer `BREAKING CHANGE: ...` → major bump.
+- `chore(server):`, `docs:`, `refactor(server):` → no version change.
+
+Prefix with `(server)` only when the change touches `server/`. The extension uses `(ext)` or no prefix and is ignored by release-plz.

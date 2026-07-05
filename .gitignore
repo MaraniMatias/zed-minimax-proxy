@@ -2,6 +2,7 @@
 target/
 **/*.rs.bk
 Cargo.lock
+.schema/
 
 # Bun
 node_modules/

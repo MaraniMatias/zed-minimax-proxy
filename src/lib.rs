@@ -84,8 +84,14 @@ impl zed::Extension for MiniMaxProxyExtension {
 
         let mut env = worktree.shell_env();
         env.push(("MINIMAX_MODEL".to_string(), settings.model));
-        env.push(("MINIMAX_MAX_TOKENS".to_string(), settings.max_tokens.to_string()));
-        env.push(("MINIMAX_TEMPERATURE".to_string(), settings.temperature.to_string()));
+        env.push((
+            "MINIMAX_MAX_TOKENS".to_string(),
+            settings.max_tokens.to_string(),
+        ));
+        env.push((
+            "MINIMAX_TEMPERATURE".to_string(),
+            settings.temperature.to_string(),
+        ));
         env.push(("MINIMAX_TOP_P".to_string(), settings.top_p.to_string()));
         env.push(("MINIMAX_API_KEY".to_string(), settings.api_token));
 
