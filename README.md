@@ -53,26 +53,17 @@ Settings live under the `minimax-proxy` LSP entry in `~/.config/zed/settings.jso
     }
   },
   "languages": {
-    "Markdown-Inline": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "Plain Text": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "Markdown": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "Python": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "Rust": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "JSON": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "YAML": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "HTML": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "CSS": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "Dockerfile": { "language_servers": ["minimax-proxy", "cspell", "..."] },
-    "JavaScript": {
-      "language_servers": [
-        "minimax-proxy",
-        "cspell",
-        "!tailwindcss-language-server",
-        "!typescript-language-server",
-        "!vue-language-server",
-        "...",
-      ],
-    }
+    "Markdown-Inline": { "language_servers": ["minimax-proxy",  "..."] },
+    "Plain Text": { "language_servers": ["minimax-proxy", "..."] },
+    "Markdown": { "language_servers": ["minimax-proxy",  "..."] },
+    "Python": { "language_servers": ["minimax-proxy", "..."] },
+    "Rust": { "language_servers": ["minimax-proxy",  "..."] },
+    "JSON": { "language_servers": ["minimax-proxy", "..."] },
+    "YAML": { "language_servers": ["minimax-proxy", "..."] },
+    "HTML": { "language_servers": ["minimax-proxy",  "..."] },
+    "CSS": { "language_servers": ["minimax-proxy",  "..."] },
+    "Dockerfile": { "language_servers": ["minimax-proxy", "..."] },
+    "JavaScript": { "language_servers": [ "minimax-proxy", "..."] },
     // .... add "minimax-proxy" as lsp server
   }
 }
