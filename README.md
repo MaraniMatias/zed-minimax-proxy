@@ -1,6 +1,6 @@
 # MiniMaxProxy
 
-A Zed extension that proxies inline code completions through the MiniMax-M3 chat-completions API. The prompt window is roughly 250k tokens, and the server rewrites each prompt into a shape M3 actually handles well.
+A Zed extension that proxies inline code completions through the MiniMax-M3 chat-completions API. The prompt window is roughly 250k tokens; the server turns each prompt into the chat-completion format M3 was tuned on.
 
 Install it as a dev extension from [MaraniMatias/zed-minimax-proxy](https://github.com/MaraniMatias/zed-minimax-proxy). No marketplace step required.
 
@@ -55,7 +55,7 @@ Settings live under the `minimax-proxy` LSP entry in `~/.config/zed/settings.jso
 }
 ```
 
-If `api_token` is missing, the server exits on startup (it requires `MINIMAX_API_KEY`). No silent default.
+If `api_token` is missing, the server exits on startup (it requires `MINIMAX_API_KEY`). It does not invent a placeholder.
 
 ## How it talks to MiniMax
 
@@ -105,7 +105,7 @@ cargo install --path server
 
 ### The Bun alternative
 
-A Bun script in `docs/server.ts` implements the same HTTP contract. It's a development aid, not what the extension spawns. Useful for testing prompt rewrites without recompiling Rust:
+A Bun script in `docs/server.ts` implements the same HTTP contract. It's a development aid, not what the extension spawns. Run it for prompt-rewrite tests when you don't want to rebuild the Rust server:
 
 ```bash
 MINIMAX_API_KEY=... bun docs/server.ts
@@ -162,6 +162,6 @@ Skip a hook on a one-off commit with `git commit --no-verify`.
 
 ## Limitations
 
-- `user_stop_takes_priority_over_default` in the server crate had a stale assertion against an earlier draft of `apply_stop_sequences`. Fixed in this release.
+- `user_stop_takes_priority_over_default` enforces that caller-supplied stop sequences override the proxy's defaults.
 - The extension expects a pre-built server binary in one of the three documented locations; there is no automatic build step.
 - Streaming is not supported; the entire response is returned in a single message. Flipping `stream: true` in the server would require a different response shape.
