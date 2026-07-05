@@ -134,6 +134,7 @@ zed-minimax-proxy/
 ├── Cargo.toml              # workspace root + extension package
 ├── rust-toolchain.toml
 ├── extension.toml
+├── lefthook.yml            # git hooks (lint, test, build)
 ├── src/lib.rs              # the extension (WASM)
 ├── server/                 # the HTTP proxy (Rust)
 │   ├── Cargo.toml
@@ -142,6 +143,22 @@ zed-minimax-proxy/
 ├── README.md
 └── LICENSE
 ```
+
+## Git hooks
+
+[Lefthook](https://lefthook.dev/) runs three gates automatically:
+
+- **pre-commit**: `cargo fmt --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace`. Parallel; runs only when matching `.rs` files are staged.
+- **pre-push**: `cargo build --target wasm32-wasip2`. Heavier, so it lives on push instead of commit.
+
+Install once after cloning:
+
+```bash
+brew install lefthook      # or scoop / apt / etc.
+lefthook install
+```
+
+Skip a hook on a one-off commit with `git commit --no-verify`.
 
 ## Limitations
 

@@ -1,0 +1,34 @@
+# Lint, test and build hooks for minimax-proxy.
+# Docs: https://lefthook.dev/configuration/
+#
+# We force the rust toolchain on PATH so lefthook always picks up
+# rustup's cargo / clippy-driver instead of a Homebrew rustc that
+# is also installed on the system. With a single rustc source, the
+# incremental cache stays consistent across cargo invocations.
+#
+# `rustup which` resolves the active toolchain's cargo / clippy-driver
+# at runtime, so this works no matter which rustup toolchain is
+# pinned by the project's rust-toolchain.toml.
+
+pre-commit:
+  parallel: true
+  commands:
+    fmt:
+      glob_filter:
+        - "**/*.rs"
+      run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo fmt --all -- --check
+    clippy:
+      glob_filter:
+        - "**/*.rs"
+      run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo clippy --workspace --all-targets -- -D warnings
+    test:
+      run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo test --workspace
+
+pre-push:
+  commands:
+    wasm:
+      glob_filter:
+        - "**/*.toml"
+        - "**/*.rs"
+        - "**/*.wit"
+      run: PATH="$(rustup which cargo | xargs dirname):$PATH" cargo build --target wasm32-wasip2
