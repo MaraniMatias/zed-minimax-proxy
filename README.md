@@ -47,7 +47,7 @@ Settings live under the `minimax-proxy` LSP entry in `~/.config/zed/settings.jso
     "minimax-proxy": {
       "settings": {
         "api_token": "sk-...",
-        "model": "MiniMax-M3",
+        "model": "MiniMax-M3", // Don't work with MiniMax-M2.7
         "max_tokens": 256
       }
     }
