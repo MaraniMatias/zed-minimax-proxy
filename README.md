@@ -1,119 +1,122 @@
 # MiniMaxProxy
 
-Extensión de Zed que proxea las code completions contra la API de **MiniMax-M3** con un contexto de hasta ~250k tokens. Pensada para inline completions en archivos grandes.
+A Zed extension that proxies inline code completions through the MiniMax-M3 chat-completions API. The prompt window is roughly 250k tokens, and the server rewrites each prompt into a shape M3 actually handles well.
 
-## Arquitectura
+Install it as a dev extension from [MaraniMatias/zed-minimax-proxy](https://github.com/MaraniMatias/zed-minimax-proxy). No marketplace step required.
 
-```
-┌──────────┐    shell_env    ┌─────────────────────────┐    HTTPS    ┌────────────┐
-│   Zed    │ ──────────────▶ │  minimax-proxy-server   │ ──────────▶ │  MiniMax   │
-│ (WASM)   │ ◀── HTTP JSON ─ │  (Rust/Axum · :8787)    │ ◀────────── │  M3 API    │
-└──────────┘                 └─────────────────────────┘             └────────────┘
-   extension                       server/
-   · wasm spawns                   · reescribe el prompt a formato
-   · inyecta env vars                "Minuet style" (FIM markers)
-     en cada LSP startup            · divide el timeout según tamaño
-```
-
-Hay **dos implementaciones del server** (mismo contrato HTTP, mismo comportamiento):
-
-| Implementación | Path                       | Stack                    |
-| -------------- | -------------------------- | ------------------------ |
-| **Rust/Axum**  | `server/src/main.rs`        | Rust + axum + reqwest    |
-| **Bun**        | `docs/server.ts`            | TypeScript + Bun runtime |
-
-Por defecto la extensión de Zed usa el binario Rust (`server/`). El script de Bun es útil para iterar rápido sin recompilar.
-
-## Build
-
-### 1. WASM de la extensión
-
-Zed, al instalar la extensión en modo dev, ejecuta `cargo build --target wasm32-wasip2` y lee el artefacto directamente desde `target/wasm32-wasip2/debug/<crate_name>.wasm` (no necesita un paso manual de copia). Si querés producir un release:
+## Quick start
 
 ```bash
-cargo build --release --target wasm32-wasip2
-# salida: target/wasm32-wasip2/release/minimax_proxy_extension.wasm
-```
+git clone https://github.com/MaraniMatias/zed-minimax-proxy
+cd zed-minimax-proxy
 
-El target `wasm32-wasip2` lo declara `rust-toolchain.toml`; rustup lo descarga solo si falta.
-
-### 2. Server (Rust)
-
-```bash
 cargo build --release --manifest-path server/Cargo.toml
-cp server/target/release/minimax-proxy-server bin/
 ```
 
-### 3. Binario standalone (sin Zed)
+Then in Zed: `Cmd+Shift+P` → `zed: install dev extension` and pick the cloned directory. Zed compiles the WASM extension, restarts when you trigger a completion, and locates the server binary at the path built above.
 
-El server expone `POST http://localhost:8787/v1/completions` con la API de OpenAI `text_completion`. Útil para probar con `curl` o integrarlo con otras herramientas.
+Drop your API token in `~/.config/zed/settings.json` (see [Settings](#settings)) and reload Zed. The first completion request starts the server; nothing else to configure.
 
-## Instalación en Zed
+## Where the server binary lives
 
-1. Renombrá este directorio a `minimax-proxy` (debe coincidir con `id` en `extension.toml`).
-2. Copialo a `~/.config/zed/extensions/minimax-proxy/`.
-3. En `~/.config/zed/settings.json` agregá la configuración (ver abajo).
-4. Reload Zed.
+The extension looks for `minimax-proxy-server` in this order:
 
-Quedan así:
+1. On `PATH` (`worktree.which(...)`); pick this if you `cargo install --path server`.
+2. At `server/target/release/minimax-proxy-server` relative to the extension directory.
+3. At `bin/minimax-proxy-server` relative to the extension directory.
 
-```
-~/.config/zed/extensions/minimax-proxy/
-├── extension.toml
-├── Cargo.toml
-├── rust-toolchain.toml
-├── src/lib.rs
-├── bin/
-│   └── minimax-proxy-server
-├── server/
-└── …
-```
+If none of these resolve, the extension returns an error pointing at the missing binary. Build the server first, then reload.
 
-El `.wasm` lo maneja Zed; para dev extensions lo lee de `target/wasm32-wasip2/debug/` (cargo lo regenera en cada reload). No necesitás copiarlo a mano.
+## Settings
 
-## Configuración
+Settings live under the `minimax-proxy` LSP entry in `~/.config/zed/settings.json`. Five fields are recognized; the others are ignored. Defaults in parentheses.
 
-### Variables de entorno (env vars)
+| Field        | Type    | Default      | Notes                                                       |
+| ------------ | ------- | ------------ | ----------------------------------------------------------- |
+| `model`      | string  | `MiniMax-M3` | Forwarded to MiniMax as the model name.                     |
+| `max_tokens` | integer | `256`        | Max output tokens per completion. Range 1-8192.             |
+| `api_token`  | string  | (none)       | API token. Required. Sent as `MINIMAX_API_KEY`.              |
+| `temperature`| number  | `0.2`        | Sampling temperature. Range 0.0-2.0.                        |
+| `top_p`      | number  | `0.95`       | Nucleus sampling. Range 0.0-1.0.                            |
 
-La extensión hereda el environment del shell al spawnear el server. Estas son las variables reconocidas:
-
-| Variable                        | Default       | Descripción                                       |
-| ------------------------------- | ------------- | ------------------------------------------------- |
-| `MINIMAX_API_KEY` (requerida)    | —             | API token. Equivalente: `MINIMAX_API_TOKEN`.       |
-| `MINIMAX_MODEL`                  | `MiniMax-M3`  | Modelo a invocar.                                  |
-| `MINIMAX_MAX_TOKENS`             | `256`         | Tokens máximos de **output**.                      |
-| `MINIMAX_MAX_INPUT_CHARS`        | `1_000_000`   | Cap de caracteres de entrada (≈ 250k tokens).       |
-| `MINIMAX_TIMEOUT_MS`             | `60000`       | Techo duro del timeout adaptativo.                  |
-| `MINIMAX_TIMEOUT_BASE_MS`        | `10000`       | Base del timeout (independiente del tamaño).        |
-| `MINIMAX_TIMEOUT_PER_K_TOKENS_MS`| `2000`        | Extra por cada 1k tokens estimados de input.        |
-| `MINIMAX_LARGE_LOG_THRESHOLD`    | `2000`        | Chars a partir de los cuales los logs se truncan.  |
-| `MINIMAX_LARGE_LOG_HEAD/TAIL`    | `300`         | Cuánto mostrar de cada extremo en logs.            |
-
-### Ejemplo de `settings.json`
+### Example `settings.json`
 
 ```json
 {
   "lsp": {
     "minimax-proxy": {
-      "env": {
-        "MINIMAX_API_KEY": "tu-key",
-        "MINIMAX_MODEL": "MiniMax-M3",
-        "MINIMAX_MAX_TOKENS": "256",
-        "MINIMAX_MAX_INPUT_CHARS": "1000000"
+      "settings": {
+        "api_token": "sk-...",
+        "model": "MiniMax-M3",
+        "max_tokens": 256
       }
     }
   }
 }
 ```
 
-Alternativa: exportá las vars en tu shell (`~/.zshrc`, `~/.bashrc`, etc.) y Zed las propaga vía `shell_env`.
+If `api_token` is missing, the server exits on startup (it requires `MINIMAX_API_KEY`). No silent default.
 
-## Probar el server sin Zed
+## How it talks to MiniMax
 
-Con el server corriendo en `:8787`:
+Zed sends the prompt as Qwen FIM markers; the proxy turns that into a chat-completion message in the format M3 was tuned on:
+
+```
+<|fim_prefix|>...código antes...<|fim_suffix|>...código después...<|fim_middle|>
+            ↓
+# language: typescript
+<contextBeforeCursor>
+...código antes...<cursorPosition>
+<contextAfterCursor>
+...código después...
+```
+
+The model fills `<cursorPosition>`. The rewrite keeps the cursor location explicit so M3 stops regurgitating FIM markers in its output.
+
+Other things the proxy does:
+
+- Splits the request timeout across the payload size (`base + per-K-tokens`), clamped to a hard cap.
+- Slices long prompts at ~250k input tokens, keeping the most recent prefix and suffix.
+- Applies default stop sequences (`<|fim_*>`, `<|endoftext|>`, doubled newlines) plus anything the caller passes.
+
+## Building from source
+
+### The extension (WASM)
 
 ```bash
-curl -s http://localhost:8787/v1/completions \
+cargo build --target wasm32-wasip2
+```
+
+The artifact lives at `target/wasm32-wasip2/debug/minimax_proxy_extension.wasm`. Dev installs in Zed read from this path; nothing to copy by hand.
+
+`rust-toolchain.toml` pins the toolchain and target, so a fresh checkout should build without extra setup as long as `rustup target add wasm32-wasip2` resolves.
+
+### The server
+
+```bash
+cargo build --release --manifest-path server/Cargo.toml
+```
+
+Output: `server/target/release/minimax-proxy-server`. The extension finds it there. To install it on your PATH instead:
+
+```bash
+cargo install --path server
+```
+
+### The Bun alternative
+
+A Bun script in `docs/server.ts` implements the same HTTP contract. It's a development aid, not what the extension spawns. Useful for testing prompt rewrites without recompiling Rust:
+
+```bash
+MINIMAX_API_KEY=... bun docs/server.ts
+```
+
+## Talking to the server directly
+
+The server listens on `127.0.0.1:8787` and accepts OpenAI-shaped `text_completion` requests:
+
+```bash
+curl -s http://127.0.0.1:8787/v1/completions \
   -H "content-type: application/json" \
   -d '{
     "model": "MiniMax-M3",
@@ -122,62 +125,26 @@ curl -s http://localhost:8787/v1/completions \
   }'
 ```
 
-Sin FIM markers también funciona: el prompt crudo se trata como prefijo y se inserta cursor al final.
+This works whether the server was launched by Zed or by hand.
 
-### Arrancar el server (Rust)
-
-```bash
-MINIMAX_API_KEY=... cargo run --release --manifest-path server/Cargo.toml
-```
-
-### Arrancar el server (Bun)
-
-```bash
-MINIMAX_API_KEY=... bun docs/server.ts
-```
-
-> Las dos implementaciones leen las mismas env vars y devuelven el mismo shape JSON. La de Bun es útil para hot-reload y para experimentar con el prompt antes de tocar el código Rust.
-
-## Estructura del repo
+## Repository layout
 
 ```
-.
-├── Cargo.toml              # package de la extensión WASM
-├── rust-toolchain.toml     # pinea "stable" + target wasm32-wasip2
-├── extension.toml          # manifiesto de la extensión Zed
-├── src/lib.rs              # entrypoint de la extensión
-├── server/                 # server HTTP en Rust
+zed-minimax-proxy/
+├── Cargo.toml              # workspace root + extension package
+├── rust-toolchain.toml
+├── extension.toml
+├── src/lib.rs              # the extension (WASM)
+├── server/                 # the HTTP proxy (Rust)
 │   ├── Cargo.toml
 │   └── src/main.rs
-├── docs/server.ts          # server HTTP en TypeScript (Bun)
-└── bin/
-    └── minimax-proxy-server  # binario precompilado
+├── docs/server.ts          # Bun alternative (local testing)
+├── README.md
+└── LICENSE
 ```
 
-El `.wasm` lo produce `cargo build --target wasm32-wasip2` en `target/wasm32-wasip2/debug/` (debug) o `release/`. Zed lo lee desde ahí; no hace falta commitearlo.
+## Limitations
 
-## Cómo funciona el prompt rewrite
-
-Zed envía prompt en formato Qwen FIM:
-
-```
-<|fim_prefix|>...código antes...<|fim_suffix|>...código después...<|fim_middle|>
-```
-
-El proxy lo reescribe al estilo "Minuet" antes de pegarle a MiniMax:
-
-```
-# language: typescript
-<contextBeforeCursor>
-...código antes...<cursorPosition>
-<contextAfterCursor>
-...código después...
-```
-
-Esto es lo que el modelo recibe en el `user` message del chat completion. Permite que el modelo razone mejor el cursor location y evita que regurgite los marcadores FIM.
-
-## Limitaciones conocidas
-
-- El test `user_stop_takes_priority_over_default` falla en `server/src/main.rs` (preexistente, sin relación con el comportamiento actual).
-- La API `zed_extension_api = 0.1.0` no expone UI para settings; se resuelven via `settings.json` + `shell_env`.
-- No hay streaming de tokens (toda la respuesta llega de una). Cambiar `stream: false` a `true` en el server rompería el contrato actual de `text_completion`.
+- `user_stop_takes_priority_over_default` in the server crate had a stale assertion against an earlier draft of `apply_stop_sequences`. Fixed in this release.
+- The extension expects a pre-built server binary in one of the three documented locations; there is no automatic build step.
+- Streaming is not supported; the entire response is returned in a single message. Flipping `stream: true` in the server would require a different response shape.

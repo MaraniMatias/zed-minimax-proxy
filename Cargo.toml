@@ -1,3 +1,7 @@
+[workspace]
+members = ["server"]
+resolver = "2"
+
 [package]
 name = "minimax-proxy-extension"
 version = "0.1.0"
@@ -8,4 +12,10 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
-zed_extension_api = "0.1.0"
+zed_extension_api = "0.7.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "z"
+lto = true

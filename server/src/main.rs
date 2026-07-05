@@ -946,13 +946,9 @@ mod tests {
 
     #[test]
     fn user_stop_takes_priority_over_default() {
-        let stop = StopSequences::One("|fim_".to_string());
+        let stop = StopSequences::One("<|fim_".to_string());
         let result = apply_stop_sequences("abc<|fim_|xyz", Some(&stop));
 
-        // User pidió cortar en "<|fim_" — el default "<|fim_" es el
-        // mismo trigger, así que cortamos en el mismo sitio. Lo que
-        // cuenta es que un stop del usuario (aunque sea substring de
-        // uno default) se aplica primero.
         assert_eq!(result, "abc");
     }
 
