@@ -11,7 +11,7 @@ dist/
 .bun/
 
 # Build artifacts
-bin/zed-proxy-server
+bin/*
 
 # OS
 .DS_Store

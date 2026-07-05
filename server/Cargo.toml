@@ -1,10 +1,10 @@
 [package]
-name = "zed-proxy-server"
-version = "0.0.1"
+name = "minimax-proxy-server"
+version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "zed-proxy-server"
+name = "minimax-proxy-server"
 path = "src/main.rs"
 
 [dependencies]

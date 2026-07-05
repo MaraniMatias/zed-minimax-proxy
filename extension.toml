@@ -1,21 +1,52 @@
-id = "zed-proxy"
-name = "Zed Proxy"
-version = "0.0.1"
+id = "minimax-proxy"
+name = "MiniMaxProxy"
+version = "0.1.0"
 schema_version = 1
 authors = ["Matias"]
-description = "Starts Zed proxy for Zed edit predictions."
+description = "MiniMax AI completion proxy for Zed edit predictions."
 themes = []
 icon_themes = []
 languages = []
 capabilities = []
+icon = ""
 
 [lib]
 kind = "Rust"
 
 [grammars]
 
-[language_servers.zed-proxy]
-name = "Zed Proxy"
+# Documentación de los settings de la extensión. La API 0.1.0 de
+# zed_extension_api no expone estos campos en una UI dedicada; se
+# leen desde variables de entorno que el usuario define en su shell
+# o settings.json de Zed y que el LSP server hereda vía shell_env().
+#
+# Variables reconocidas por el binario minimax-proxy-server:
+#   MINIMAX_API_KEY     → token de la API (requerido)
+#   MINIMAX_MODEL       → modelo (default "MiniMax-M3")
+#   MINIMAX_MAX_TOKENS  → tokens de output (default 256)
+#   MINIMAX_API_TOKEN   → alias de MINIMAX_API_KEY
+#   MINIMAX_TIMEOUT_MS  → techo duro del timeout en ms (default 60000)
+#   MINIMAX_TIMEOUT_BASE_MS            → base del timeout adaptativo (default 10000)
+#   MINIMAX_TIMEOUT_PER_K_TOKENS_MS    → extra por cada 1k tokens estimados (default 2000)
+#   MINIMAX_MAX_INPUT_CHARS            → cap de chars de entrada (default 1_000_000)
+#   MINIMAX_LARGE_LOG_THRESHOLD/HEAD/TAIL → control de logs
+#
+# Ejemplo en ~/.config/zed/settings.json:
+#   {
+#     "lsp": {
+#       "minimax-proxy": {
+#         "env": {
+#           "MINIMAX_API_KEY": "...",
+#           "MINIMAX_MODEL": "MiniMax-M3",
+#           "MINIMAX_MAX_TOKENS": "256"
+#         }
+#       }
+#     }
+#   }
+[settings]
+
+[language_servers.minimax-proxy]
+name = "MiniMaxProxy"
 languages = [
   "Bash",
   "C",
@@ -45,7 +76,7 @@ languages = [
   "YAML",
 ]
 
-[language_servers.zed-proxy.language_ids]
+[language_servers.minimax-proxy.language_ids]
 
 [context_servers]
 
