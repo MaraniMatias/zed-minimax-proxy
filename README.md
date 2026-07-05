@@ -51,6 +51,29 @@ Settings live under the `minimax-proxy` LSP entry in `~/.config/zed/settings.jso
         "max_tokens": 256
       }
     }
+  },
+  "languages": {
+    "Markdown-Inline": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "Plain Text": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "Markdown": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "Python": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "Rust": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "JSON": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "YAML": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "HTML": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "CSS": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "Dockerfile": { "language_servers": ["minimax-proxy", "cspell", "..."] },
+    "JavaScript": {
+      "language_servers": [
+        "minimax-proxy",
+        "cspell",
+        "!tailwindcss-language-server",
+        "!typescript-language-server",
+        "!vue-language-server",
+        "...",
+      ],
+    }
+    // .... add "minimax-proxy" as lsp server
   }
 }
 ```
