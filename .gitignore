@@ -1,0 +1,29 @@
+# Rust / Cargo
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Bun
+node_modules/
+bun.lockb
+bun.lock
+dist/
+.bun/
+
+# Build artifacts
+bin/zed-proxy-server
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Env
+.env
+.env.local
+.env.*.local

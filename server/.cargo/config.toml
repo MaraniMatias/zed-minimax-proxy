@@ -1,0 +1,2 @@
+[build]
+rustc = "/Users/matiasmarani/.cargo/bin/rustc"

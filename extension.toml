@@ -1,0 +1,54 @@
+id = "zed-proxy"
+name = "Zed Proxy"
+version = "0.0.1"
+schema_version = 1
+authors = ["Matias"]
+description = "Starts Zed proxy for Zed edit predictions."
+themes = []
+icon_themes = []
+languages = []
+capabilities = []
+
+[lib]
+kind = "Rust"
+
+[grammars]
+
+[language_servers.zed-proxy]
+name = "Zed Proxy"
+languages = [
+  "Bash",
+  "C",
+  "C++",
+  "CSS",
+  "Dockerfile",
+  "Elixir",
+  "Go",
+  "HTML",
+  "Java",
+  "JavaScript",
+  "JSON",
+  "JSX",
+  "Markdown",
+  "PHP",
+  "Plain Text",
+  "Python",
+  "Ruby",
+  "Rust",
+  "SQL",
+  "Svelte",
+  "Swift",
+  "TOML",
+  "TSX",
+  "TypeScript",
+  "Vue.js",
+  "YAML",
+]
+
+[language_servers.zed-proxy.language_ids]
+
+[context_servers]
+
+[agent_servers]
+
+[slash_commands]
